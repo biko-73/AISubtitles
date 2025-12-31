@@ -1,36 +1,55 @@
 name: Build and Release Enigma2 IPK
 
 on:
-  workflow_dispatch: {}   # يمكن تشغيله يدوياً من Actions
+  workflow_dispatch: {}        # يمكن تشغيله يدوياً
   release:
-    types: [published]  # يبدأ تلقائياً عند إنشاء Release
+    types: [published]         # يبدأ تلقائياً عند إنشاء Release
 
 jobs:
   build-ipk:
     runs-on: ubuntu-latest
 
     steps:
+    # 1️⃣ نسخ ملفات المشروع
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    # 2️⃣ إعداد هيكلية IPK
     - name: Set up IPK structure
       run: |
         mkdir -p ipk/CONTROL
         cp CONTROL/control ipk/CONTROL/
+        
+        # نسخ الملفات من المسارات الصحيحة
         mkdir -p ipk/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles
-        cp -r src/* ipk/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles/
+        cp -r usr/lib/enigma2/python/Plugins/Extensions/AISubtitles/* ipk/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles/
+        
+        mkdir -p ipk/etc/enigma2/aisubtitles
+        cp -r etc/enigma2/aisubtitles/* ipk/etc/enigma2/aisubtitles/
 
+    # 3️⃣ بناء ملف .ipk
     - name: Build .ipk package
       run: |
         PKGNAME=$(awk '/^Package:/ {print $2}' ipk/CONTROL/control)
         VERSION=$(awk '/^Version:/ {print $2}' ipk/CONTROL/control)
         ARCH=$(awk '/^Architecture:/ {print $2}' ipk/CONTROL/control)
-        tar czf ${PKGNAME}_${VERSION}_${ARCH}.ipk -C ipk .
-        echo "Built IPK: ${PKGNAME}_${VERSION}_${ARCH}.ipk"
+        IPKFILE="${PKGNAME}_${VERSION}_${ARCH}.ipk"
+        tar czf $IPKFILE -C ipk .
+        echo "Built IPK: $IPKFILE"
 
+    # 4️⃣ رفع الملف على الـ Release (Asset)
     - name: Upload IPK to Release
+      if: github.event_name == 'release'
       uses: softprops/action-gh-release@v1
       with:
         files: "${{ github.workspace }}/*.ipk"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # 5️⃣ رفع الملف كـ Artifact لو كان تشغيل يدوي
+    - name: Upload IPK as Artifact (manual run)
+      if: github.event_name == 'workflow_dispatch'
+      uses: actions/upload-artifact@v3
+      with:
+        name: aisubtitles-ipk
+        path: "${{ github.workspace }}/*.ipk"
