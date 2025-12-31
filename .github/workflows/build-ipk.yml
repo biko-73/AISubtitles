@@ -1,51 +1,36 @@
-name: Build Enigma2 IPK
+name: Build and Release Enigma2 IPK
 
-# تشغيل تلقائي عند نشر Release + يدوي عبر زر Run workflow
 on:
+  workflow_dispatch:   # يمكن تشغيله يدوياً من Actions
   release:
-    types:
-      - published
-  workflow_dispatch:
+    types: [published]  # يبدأ تلقائياً عند إنشاء Release
 
 jobs:
-  build:
+  build-ipk:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
+    - name: Set up IPK structure
+      run: |
+        mkdir -p ipk/CONTROL
+        cp CONTROL/control ipk/CONTROL/
+        mkdir -p ipk/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles
+        cp -r src/* ipk/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles/
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential fakeroot dpkg-dev
+    - name: Build .ipk package
+      run: |
+        PKGNAME=$(awk '/^Package:/ {print $2}' ipk/CONTROL/control)
+        VERSION=$(awk '/^Version:/ {print $2}' ipk/CONTROL/control)
+        ARCH=$(awk '/^Architecture:/ {print $2}' ipk/CONTROL/control)
+        tar czf ${PKGNAME}_${VERSION}_${ARCH}.ipk -C ipk .
+        echo "Built IPK: ${PKGNAME}_${VERSION}_${ARCH}.ipk"
 
-      - name: Prepare CONTROL folder
-        run: |
-          if [ ! -d "./CONTROL" ]; then
-            echo "CONTROL folder not found!"
-            exit 1
-          fi
-          mkdir -p package/CONTROL
-          cp -r CONTROL/* package/CONTROL/
-
-      - name: Copy plugin files
-        run: |
-          mkdir -p package/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles
-          cp -r aisubtitles/* package/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles/
-
-      - name: Build .ipk package
-        run: |
-          cd package
-          dpkg-deb --build . ../aisubtitles_v${{ github.event.release.tag_name }}_all.ipk
-
-      - name: Upload IPK as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: aisubtitles-ipk
-          path: aisubtitles_v${{ github.event.release.tag_name }}_all.ipk
+    - name: Upload IPK to Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: "${{ github.workspace }}/*.ipk"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
