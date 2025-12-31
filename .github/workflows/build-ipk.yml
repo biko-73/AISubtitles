@@ -2,7 +2,8 @@ name: Build Enigma2 IPK
 
 on:
   release:
-    types: [published]
+    types:
+      - published
 
 jobs:
   build:
@@ -15,7 +16,7 @@ jobs:
     - name: Install tools
       run: sudo apt-get update && sudo apt-get install -y fakeroot tar
 
-    - name: Prepare IPK
+    - name: Build IPK
       run: |
         mkdir -p ipk/usr ipk/CONTROL
         cp -r usr/* ipk/usr/
@@ -25,7 +26,7 @@ jobs:
         echo "2.0" > debian-binary
         tar -czf aisubtitles_latest_all.ipk debian-binary control.tar.gz data.tar.gz
 
-    - name: Upload IPK
+    - name: Upload built IPK
       uses: softprops/action-gh-release@v1
       with:
-        files: aisubtitles_${{ github.ref_name }}_all.ipk
+        files: aisubtitles_latest_all.ipk
