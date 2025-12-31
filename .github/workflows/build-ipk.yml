@@ -24,7 +24,7 @@ jobs:
         fakeroot tar -czf data.tar.gz -C ipk usr
         fakeroot tar -czf control.tar.gz -C ipk CONTROL
         echo "2.0" > debian-binary
-        tar -czf aisubtitles_${{ github.ref_name }}_all.ipk debian-binary control.tar.gz data.tar.gz
+        tar -czf aisubtitles_latest_all.ipk debian-binary control.tar.gz data.tar.gz
 
     - name: Upload IPK
       uses: softprops/action-gh-release@v1
