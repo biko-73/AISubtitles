@@ -1,7 +1,7 @@
 name: Build and Release Enigma2 IPK
 
 on:
-  workflow_dispatch:   # يمكن تشغيله يدوياً من Actions
+  workflow_dispatch: {}   # يمكن تشغيله يدوياً من Actions
   release:
     types: [published]  # يبدأ تلقائياً عند إنشاء Release
 
