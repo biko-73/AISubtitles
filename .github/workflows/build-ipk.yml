@@ -1,9 +1,8 @@
 name: Build Enigma2 IPK
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
 
 jobs:
   build:
