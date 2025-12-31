@@ -1,32 +1,51 @@
 name: Build Enigma2 IPK
 
+# تشغيل تلقائي عند نشر Release + يدوي عبر زر Run workflow
 on:
   release:
     types:
       - published
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Install tools
-      run: sudo apt-get update && sudo apt-get install -y fakeroot tar
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
 
-    - name: Build IPK
-      run: |
-        mkdir -p ipk/usr ipk/CONTROL
-        cp -r usr/* ipk/usr/
-        cp -r CONTROL/* ipk/CONTROL/
-        fakeroot tar -czf data.tar.gz -C ipk usr
-        fakeroot tar -czf control.tar.gz -C ipk CONTROL
-        echo "2.0" > debian-binary
-        tar -czf aisubtitles_latest_all.ipk debian-binary control.tar.gz data.tar.gz
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential fakeroot dpkg-dev
 
-    - name: Upload built IPK
-      uses: softprops/action-gh-release@v1
-      with:
-        files: aisubtitles_latest_all.ipk
+      - name: Prepare CONTROL folder
+        run: |
+          if [ ! -d "./CONTROL" ]; then
+            echo "CONTROL folder not found!"
+            exit 1
+          fi
+          mkdir -p package/CONTROL
+          cp -r CONTROL/* package/CONTROL/
+
+      - name: Copy plugin files
+        run: |
+          mkdir -p package/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles
+          cp -r aisubtitles/* package/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles/
+
+      - name: Build .ipk package
+        run: |
+          cd package
+          dpkg-deb --build . ../aisubtitles_v${{ github.event.release.tag_name }}_all.ipk
+
+      - name: Upload IPK as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: aisubtitles-ipk
+          path: aisubtitles_v${{ github.event.release.tag_name }}_all.ipk
