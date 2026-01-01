@@ -1,6 +1,5 @@
 name: Build and Release Enigma2 IPK
 
-# تشغيل يدوي أو عند نشر Release
 on:
   workflow_dispatch: {}        # يمكن تشغيله يدوياً
   release:
@@ -29,7 +28,9 @@ jobs:
         PKGNAME=$(awk '/^Package:/ {print $2}' ipk/CONTROL/control)
         VERSION=$(awk '/^Version:/ {print $2}' ipk/CONTROL/control)
         ARCH=$(awk '/^Architecture:/ {print $2}' ipk/CONTROL/control)
+        # تأكد من إزالة الحروف غير الصالحة (مثل \r)
         IPKFILE="${PKGNAME}_${VERSION}_${ARCH}.ipk"
+        IPKFILE=$(echo $IPKFILE | tr -d '\r')  # إزالة \r
         tar czf $IPKFILE -C ipk .
         echo "Built IPK: $IPKFILE"
 
@@ -45,7 +46,7 @@ jobs:
     # 5️⃣ رفع الملف كـ Artifact لو كان تشغيل يدوي
     - name: Upload IPK as Artifact (manual run)
       if: github.event_name == 'workflow_dispatch'
-      uses: actions/upload-artifact@v4  # استخدم الإصدار v4 أو بعده
+      uses: actions/upload-artifact@v4
       with:
         name: aisubtitles-ipk
         path: "${{ github.workspace }}/*.ipk"
