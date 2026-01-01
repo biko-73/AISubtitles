@@ -21,7 +21,7 @@ jobs:
         mkdir -p ipk/CONTROL
         cp CONTROL/control ipk/CONTROL/
         mkdir -p ipk/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles
-        cp -r src/* ipk/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles/
+        cp -r usr/lib/enigma2/python/Plugins/Extensions/AISubtitles/* ipk/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles/
 
     # 3️⃣ بناء ملف .ipk
     - name: Build .ipk package
@@ -45,7 +45,7 @@ jobs:
     # 5️⃣ رفع الملف كـ Artifact لو كان تشغيل يدوي
     - name: Upload IPK as Artifact (manual run)
       if: github.event_name == 'workflow_dispatch'
-      uses: actions/upload-artifact@v2  # استخدم الإصدار v2
+      uses: actions/upload-artifact@v3  # استخدم الإصدار v3 الآن
       with:
         name: aisubtitles-ipk
         path: "${{ github.workspace }}/*.ipk"
