@@ -15,12 +15,16 @@ jobs:
       uses: actions/checkout@v3
 
     # 2️⃣ إعداد هيكلية IPK
-    - name: Set up IPK structure
-      run: |
-        mkdir -p ipk/CONTROL
-        cp CONTROL/control ipk/CONTROL/
-        mkdir -p ipk/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles
-        cp -r usr/lib/enigma2/python/Plugins/Extensions/AISubtitles/* ipk/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles/
+- name: Set up IPK structure
+  run: |
+    mkdir -p ipk/CONTROL
+    cp CONTROL/control ipk/CONTROL/
+    mkdir -p ipk/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles
+    cp -r src/* ipk/usr/lib/enigma2/python/Plugins/Extensions/AISubtitles/
+    
+    # إضافة المجلد etc مع محتوياته
+    mkdir -p ipk/etc/enigma2
+    cp -r etc/enigma2/aisubtitles ipk/etc/enigma2/
 
     # 3️⃣ بناء ملف .ipk
     - name: Build .ipk package
